@@ -94,7 +94,7 @@
     (goto-char now-point)))
 
 ;;;###autoload
-(defun phpcbf-enable-on-save()
+(defun phpcbf-enable-on-save ()
   "Run pbpcbf when this buffer is saved."
   (add-hook 'before-save-hook 'phpcbf nil t))
 
