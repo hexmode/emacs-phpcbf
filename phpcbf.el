@@ -46,15 +46,27 @@
   :group 'phpcbf
   :type 'string)
 
-(defcustom phpcbf-standard "PEAR"
-  "The name or path of the coding standard to use."
+(defcustom phpcbf-standard nil
+  "The name or path of the coding standard to use, e.g. “PEAR”.
+
+If nil, “phpcbf” will look for a dominating “phpcs.xml” file,
+falling back to PEAR if none is found."
   :group 'phpcbf
-  :type 'string)
+  :type '(choice string (const nil)))
 
 (defun phpcbf-executable ()
   "Find the “phpcbf” executable or signal an error."
   (or (executable-find phpcbf-executable)
       (error "%s: executable not found" phpcbf-executable)))
+
+(defun phpcbf--options ()
+  "Generate the options list for running “phpcbf”."
+  (append (when phpcbf-standard
+            (list (format "--standard=%s" phpcbf-standard)))
+          (list (s-chop-suffixes
+                 '("-unix" "-dos" "-mac")
+                 (format "--encoding=%s" buffer-file-coding-system))
+		"-d" "error_reporting=0")))
 
 ;;;###autoload
 (defun phpcbf ()
@@ -65,21 +77,14 @@
     (unwind-protect
         (let ((status)
               (stderr)
-              (standard (format "--standard=%s" phpcbf-standard))
-              (encoding (s-chop-suffixes
-                         '("-unix" "-dos" "-mac")
-                         (format "--encoding=%s" buffer-file-coding-system)))
               (keep-stderr (list t temp-file)))
 
           (setq status
-                (call-process-region
-                 (point-min) (point-max)
-                 (phpcbf-executable)
-                 t keep-stderr t
-                 "-d" "error_reporting=0"
-                 standard
-                 encoding
-                 ))
+                (apply #'call-process-region
+		       (point-min) (point-max)
+		       (phpcbf-executable)
+		       t keep-stderr t
+		       (phpcbf--options)))
 
           (setq stderr
                 (with-temp-buffer
