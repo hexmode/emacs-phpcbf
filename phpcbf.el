@@ -72,42 +72,41 @@ falling back to PEAR if none is found."
 (defun phpcbf ()
   "Format the current buffer according to the phpcbf."
   (interactive)
-  (let ((temp-file (make-temp-file "phpcbf"))
-        (now-point (point)))
-    (unwind-protect
-        (let ((status)
-              (stderr)
-              (keep-stderr (list t temp-file)))
+  (let ((point (point))
+        (source (current-buffer))
+        (status) (output))
+    (with-temp-buffer
+      (insert-buffer-substring-no-properties source)
+      (setq status (apply #'call-process-region
+                          (point-min) (point-max)
+                          (phpcbf-executable)
+                          t t nil
+                          (phpcbf--options)))
+      (setq output (buffer-substring-no-properties (point-min) (point-max))))
+    (cond
+     ((equal 1 status)
+      (erase-buffer)
+      (insert output)
+      (goto-char point))
+     ((stringp status)
+      (error "‘phpcbf’ killed by signal %s" status))
+     (t (unless output
+          (setq output "no output"))
+        ;; Strip trailing whitespace
+        (when (string-match "[ \t\n\r]+\\'" output)
+          (setq output (replace-match "" t t output)))
+        (error "‘phpcbf’ failed with code %s: %s" status output)))))
 
-          (setq status
-                (apply #'call-process-region
-		       (point-min) (point-max)
-		       (phpcbf-executable)
-		       t keep-stderr t
-		       (phpcbf--options)))
-
-          (setq stderr
-                (with-temp-buffer
-                  (insert-file-contents temp-file)
-                  (when (> (point-max) (point-min))
-                    (insert ": "))
-                  (buffer-substring-no-properties
-                   (point-min) (line-end-position))))
-
-          (cond
-           ((stringp status)
-            (error "`phpcbf` killed by signal %s%s" status stderr))
-           ((not (equal 1 status))
-            (error "`phpcbf` failed with code %d%s" status stderr))
-           (t (message (format "Formatted to standard '%s'" phpcbf-standard))))
-          ))
-    (delete-file temp-file)
-    (goto-char now-point)))
+(defun phpcbf-warn-on-error ()
+  "Run phpcbf but reduce errors to warnings."
+  (condition-case err
+      (phpcbf)
+    (error err (display-warning 'phpcbf (error-message-string err)))))
 
 ;;;###autoload
 (defun phpcbf-enable-on-save ()
   "Run pbpcbf when this buffer is saved."
-  (add-hook 'before-save-hook 'phpcbf nil t))
+  (add-hook 'before-save-hook 'phpcbf-warn-on-error nil t))
 
 (provide 'phpcbf)
 
