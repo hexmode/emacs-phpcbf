@@ -41,7 +41,7 @@
   "Format PHP code using PHP_CodeSniffer's phpcbf"
   :group 'tools)
 
-(defcustom phpcbf-executable (executable-find "phpcbf")
+(defcustom phpcbf-executable "phpcbf"
   "Location of the phpcbf executable."
   :group 'phpcbf
   :type 'string)
@@ -50,6 +50,11 @@
   "The name or path of the coding standard to use."
   :group 'phpcbf
   :type 'string)
+
+(defun phpcbf-executable ()
+  "Find the “phpcbf” executable or signal an error."
+  (or (executable-find phpcbf-executable)
+      (error "%s: executable not found" phpcbf-executable)))
 
 ;;;###autoload
 (defun phpcbf ()
@@ -68,7 +73,8 @@
 
           (setq status
                 (call-process-region
-                 (point-min) (point-max) phpcbf-executable
+                 (point-min) (point-max)
+                 (phpcbf-executable)
                  t keep-stderr t
                  "-d" "error_reporting=0"
                  standard
