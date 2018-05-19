@@ -72,14 +72,17 @@ falling back to PEAR if none is found."
 (defun phpcbf ()
   "Format the current buffer according to the phpcbf."
   (interactive)
-  (let ((point (point))
+  (let (;; Make sure to look up the executable before switching to the
+        ;; temp buffer so a buffer-local ‘exec-path’ can be used.
+        (phpcbf (phpcbf-executable))
+        (point (point))
         (source (current-buffer))
         (status) (output))
     (with-temp-buffer
       (insert-buffer-substring-no-properties source)
       (setq status (apply #'call-process-region
                           (point-min) (point-max)
-                          (phpcbf-executable)
+                          phpcbf
                           t t nil
                           (phpcbf--options)))
       (setq output (buffer-substring-no-properties (point-min) (point-max))))
