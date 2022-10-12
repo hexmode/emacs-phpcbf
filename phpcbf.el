@@ -3,7 +3,8 @@
 ;;; Copyright (c) 2015 nishimaki10
 
 ;; Author: nishimaki10
-;; URL: https://github.com/nishimaki10/emacs-phpcbf
+;; Maintainer: Mark A. Hershberger <mah@nichework.com>
+;; URL: https://github.com/hexmode/emacs-phpcbf
 ;; Version: 0.9.2
 ;; Package-Requires: ((s "1.9.0"))
 ;; Keywords: tools, php
@@ -29,8 +30,14 @@
 
 ;;     (add-hook 'php-mode-hook 'phpcbf-enable-on-save)
 
+;; My use-package set up is:
+
+;;     (use-package phpcbf
+;;       :straight (:host github :repo "hexmode/emacs-phpcbf")
+;;       :hook (php-mode . phpcbf-enable-on-save))
+
 ;; Please check the GitHub
-;; (https://github.com/nishimaki10/emacs-phpcbf)
+;; (https://github.com/hexmode/emacs-phpcbf)
 ;; for more information.
 
 ;;; Code:
